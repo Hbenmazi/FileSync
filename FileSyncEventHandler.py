@@ -49,8 +49,12 @@ class FileSyncEventHandler(FileSystemEventHandler):
         :type event:
             :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
         """
-        if isinstance(event, DirModifiedEvent):
+        seconds = int(time.time())
+
+        if isinstance(event, DirModifiedEvent) or (seconds, event.src_path) in self.file_modified_event:
             return
-        seconds = time.time()
-        key = (seconds, event.src_path)
-        print(seconds, event)
+
+        self.file_modified_event.add((seconds, event.src_path))
+        print(event)
+
+
