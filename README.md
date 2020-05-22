@@ -15,7 +15,7 @@
 
 :white_check_mark:完成了创建、删除和修改事件的处理
 
-:white_check_mark:用PyQt5设计了简单的GUI界面
+:white_check_mark:用PyQt5设计了简单的GUI界面  
 
 
 
@@ -25,7 +25,7 @@
 
 :o:由于WindowsAPI的限制，无法判断删除事件的主体是文件夹还是文件，而且当文件夹被删除时，只会触发一个删除事件，不会递归地触发该目录下其它文件的删除事件。
 
-* :ballot_box_with_check:将文件夹和文件的删除事件统一处理：先获取删除的路径，在获取S3上所有以该路径为前缀的Object，然后统一删除
+* :ballot_box_with_check:将文件夹和文件的删除事件统一处理：先获取删除的路径，在获取S3上所有以该路径为前缀的Object，然后统一删除  
 
   
 
