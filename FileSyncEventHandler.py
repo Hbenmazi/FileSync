@@ -1,19 +1,25 @@
+import hashlib
+import math
 import sys
 import time
 import logging
+
+from filechunkio import FileChunkIO
 from watchdog.observers import Observer
 from watchdog.events import *
 import boto3
 import botocore.exceptions
+import os
+from concurrent.futures import ThreadPoolExecutor
 
-
-class Dir:
-    def read(self, amount=1):
-        return bytes(0)
+from common.Dir import Dir
+from common.FilePart import FilePart
+from common.utils import *
 
 
 class FileSyncEventHandler(FileSystemEventHandler):
-    def __init__(self, endpoint_url, aws_access_key_id, aws_secret_access_key, local_root, remote_root):
+    def __init__(self, endpoint_url, aws_access_key_id, aws_secret_access_key, local_root, remote_root, threshold=15,
+                 chunk_size=5):
         self.client = boto3.client('s3',
                                    endpoint_url=endpoint_url,
                                    aws_access_key_id=aws_access_key_id,
@@ -21,6 +27,8 @@ class FileSyncEventHandler(FileSystemEventHandler):
         self.local_root = local_root
         self.remote_root = remote_root
         self.bucket_name = 'hezhiwei'
+        self.threshold = threshold * MB
+        self.chunk_size = chunk_size * MB
 
     file_modified_event = set()
 
@@ -125,21 +133,81 @@ class FileSyncEventHandler(FileSystemEventHandler):
             return
 
         # ignore if the same event occur within 1 second
-        if isinstance(event, DirModifiedEvent) or (seconds, event.src_path) in self.file_modified_event:
+        if (seconds, event.src_path) in self.file_modified_event:
             return
-        self.file_modified_event.add((seconds, event.src_path))
 
+        self.file_modified_event.add((seconds, event.src_path))
         print(event)
 
         # generate key in S3
         key = event.src_path.replace(self.local_root, self.remote_root, 1)
         key = key.replace('\\', '/')
 
+        # get MD5 and file size(Byte)
+        while True:
+            try:
+                fetag = calc_etag(event.src_path, self.threshold, self.chunk_size)
+                fsize = os.path.getsize(event.src_path)
+                break
+            except IOError as e:
+                time.sleep(0.05)
+
+        # try to get the object header in S3
+        try:
+            response = self.client.head_object(
+                Bucket=self.bucket_name,
+                Key=key,
+            )
+
+        except botocore.exceptions.ClientError as error:
+            if error.response['Error']['Code'] == '404':  # Object doesn't exist in S3
+                response = {}
+            else:
+                raise error
+
+        # ignore if the same object has already exist in S3
+        if 'ETag' in response.keys() and response['ETag'].strip("\'\"") == fetag:
+            print("S3 Head Object: {} already exists".format(key))
+            return
+
         # upload
         try:
             time.sleep(1)
-            with open(event.src_path, 'rb') as data:
-                self.client.upload_fileobj(data, self.bucket_name, key)
+            if fsize < self.threshold:
+                with open(event.src_path, 'rb') as data:
+                    self.client.upload_fileobj(data, self.bucket_name, key)
+            else:
+                response = self.client.create_multipart_upload(Bucket=self.bucket_name,
+                                                               Key=key)
+                if 'UploadId' in response.keys():
+                    upload_id = response['UploadId']
+                else:
+                    raise Exception("Fail to init multipart upload for {}".format(event.src_path))
+
+                chunk_cnt = int(math.ceil(fsize * 1.0 / self.chunk_size))
+
+                args = [{'client': self.client,
+                         'bucket_name': self.bucket_name,
+                         'key': key,
+                         'file_part': FilePart(file_path=event.src_path,
+                                               part_num=i + 1,
+                                               offset=(self.chunk_size * i),
+                                               length=min(self.chunk_size, fsize - (self.chunk_size * i)),
+                                               transfer_id=upload_id)}
+                        for i in range(0, chunk_cnt)]
+
+                with ThreadPoolExecutor(max_workers=4) as pool:
+                    res = pool.map(upload_part, args)
+
+                self.client.complete_multipart_upload(
+                    Bucket=self.bucket_name,
+                    Key=key,
+                    MultipartUpload={
+                        'Parts': list(res)
+                    },
+                    UploadId=upload_id,
+                )
+                print("S3 Multipart Upload Successfully: {}".format(key))
 
         except botocore.exceptions.ClientError as error:
             raise error
