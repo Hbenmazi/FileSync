@@ -1,6 +1,7 @@
 import time
 
 import boto3
+from s3fs import S3FileSystem
 from watchdog.observers import Observer
 from FileSyncEventHandler import FileSyncEventHandler
 
@@ -17,6 +18,7 @@ s3_client = boto3.client('s3')
 # Print out bucket names
 for bucket in s3.buckets.all():
     print(bucket.name)
+
 
 if __name__ == "__main__":
     endpoint_url = "http://scuts3.depts.bingosoft.net:29999"
