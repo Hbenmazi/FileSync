@@ -1,35 +1,42 @@
 import math
 import os
+import shutil
 import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from hashlib import md5
 import botocore.exceptions
 from filechunkio import FileChunkIO
-
-from .FilePart import FilePart
-
+from common.FilePart import FilePart
+from tqdm import tqdm
 MB = 1024 * 1024
 
 
 def upload_part(kwargs):
     client = kwargs.get('client')
-    bucket_name = kwargs.get('bucket_name')
-    key = kwargs.get('key')
     file_part = kwargs.get('file_part')
-    try:
-        with FileChunkIO(file_part.file_path, 'r', offset=file_part.offset, bytes=file_part.length) as fp_body:
-            response = client.upload_part(
-                Body=fp_body,
-                Bucket=bucket_name,
-                ContentLength=file_part.length,
-                Key=key,
-                PartNumber=file_part.part_num,
-                UploadId=file_part.transfer_id,
-            )
-        return {'ETag': response['ETag'], 'PartNumber': file_part.part_num}
 
-    except botocore.exceptions.ClientError as error:
-        raise error
+    while True:
+        try:
+            with FileChunkIO(file_part.file_path, 'r', offset=file_part.offset, bytes=file_part.length) as fp_body:
+                response = client.upload_part(
+                    Body=fp_body,
+                    Bucket=file_part.bucket_name,
+                    ContentLength=file_part.length,
+                    Key=file_part.key,
+                    PartNumber=file_part.part_num,
+                    UploadId=file_part.transfer_id,
+                )
+            break
+        except IOError:
+            time.sleep(0.05)
+        except botocore.exceptions.ClientError as error:
+            raise error
+
+    path = 'parts/{}/{}.pt'.format(file_part.transfer_id, file_part.part_num)
+    if os.path.exists(path):
+        os.remove(path)
+
+    return {'ETag': response['ETag'], 'PartNumber': file_part.part_num}
 
 
 def calc_etag(inputfile, threshold, partsize):
@@ -71,9 +78,9 @@ def upload_object(client, bucket_name, src_path, key, threshold, chunk_size):
             chunk_cnt = int(math.ceil(fsize * 1.0 / chunk_size))
 
             args = [{'client': client,
-                     'bucket_name': bucket_name,
-                     'key': key,
-                     'file_part': FilePart(file_path=src_path,
+                     'file_part': FilePart(bucket_name=bucket_name,
+                                           key=key,
+                                           file_path=src_path,
                                            part_num=i + 1,
                                            offset=(chunk_size * i),
                                            length=min(chunk_size, fsize - (chunk_size * i)),
@@ -81,17 +88,36 @@ def upload_object(client, bucket_name, src_path, key, threshold, chunk_size):
                     for i in range(0, chunk_cnt)]
 
             with ThreadPoolExecutor(max_workers=4) as pool:
-                res = pool.map(upload_part, args)
+                res = list(tqdm(pool.map(upload_part, args), total=len(args), desc="Multi Part Uploading:{}".format(key)))
 
             client.complete_multipart_upload(
                 Bucket=bucket_name,
                 Key=key,
                 MultipartUpload={
-                    'Parts': list(res)
+                    'Parts': res
                 },
                 UploadId=upload_id,
             )
+
+            path = 'parts/{}'.format(upload_id)
+            if os.path.exists(path):
+                shutil.rmtree(path, ignore_errors=True)
             print("S3 Multipart Upload Successfully: {}".format(key))
 
     except botocore.exceptions.ClientError as error:
         raise error
+
+
+def list_all_file(dir_path):
+    for r, d, f in os.walk(dir_path):
+        return f
+
+
+def list_all_subdir(path):
+    gen = os.walk(path)
+    for x in gen:
+        return x[1]
+
+
+if __name__ == "__main__":
+    print(list_all_file('..\\parts\\{}'.format("新建文件夹")))

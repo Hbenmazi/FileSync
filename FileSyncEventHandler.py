@@ -11,16 +11,9 @@ from common.utils import *
 
 
 class FileSyncEventHandler(FileSystemEventHandler):
-    def __init__(self, endpoint_url, aws_access_key_id, aws_secret_access_key, local_root, remote_root, threshold=15,
+    def __init__(self, client, local_root, remote_root, threshold=15,
                  chunk_size=5):
-        self.client = boto3.client('s3',
-                                   endpoint_url=endpoint_url,
-                                   aws_access_key_id=aws_access_key_id,
-                                   aws_secret_access_key=aws_secret_access_key)
-        self.s3fs = S3FileSystem(anon=False,
-                                 client_kwargs={'endpoint_url': endpoint_url},
-                                 key=aws_access_key_id,
-                                 secret=aws_secret_access_key)
+        self.client = client
         self.local_root = local_root
         self.remote_root = remote_root
         self.bucket_name = 'hezhiwei'
@@ -46,6 +39,7 @@ class FileSyncEventHandler(FileSystemEventHandler):
         )
 
         if 'Contents' in response.keys():
+            # Todo:parallel
             for s3_object in response['Contents']:
                 src_key = s3_object['Key']
                 dest_key = s3_object['Key'].replace(src_prefix, dest_prefix, 1)

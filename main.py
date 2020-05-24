@@ -4,6 +4,7 @@ import boto3
 from s3fs import S3FileSystem
 from watchdog.observers import Observer
 from FileSyncEventHandler import FileSyncEventHandler
+from FileSyncLauncher import FileSyncLauncher
 
 endpoint_url = "http://scuts3.depts.bingosoft.net:29999"
 aws_access_key_id = "8A5290742BF72419BAFF"
@@ -19,7 +20,6 @@ s3_client = boto3.client('s3')
 for bucket in s3.buckets.all():
     print(bucket.name)
 
-
 if __name__ == "__main__":
     endpoint_url = "http://scuts3.depts.bingosoft.net:29999"
     aws_access_key_id = "8A5290742BF72419BAFF"
@@ -27,20 +27,10 @@ if __name__ == "__main__":
     remote_root = 'remote'
     local_root = 'local'
 
-    observer = Observer()
-    event_handler = FileSyncEventHandler(endpoint_url,
-                                         aws_access_key_id,
-                                         aws_secret_access_key,
-                                         local_root=local_root,
-                                         remote_root=remote_root)
+    launcher = FileSyncLauncher(endpoint_url,
+                                aws_access_key_id,
+                                aws_secret_access_key,
+                                local_root=local_root,
+                                remote_root=remote_root)
+    launcher.run()
 
-    observer.schedule(event_handler, path=local_root, recursive=True)
-
-    observer.start()
-
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
