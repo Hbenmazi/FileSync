@@ -1,2 +1,7 @@
 .idea/
-__pycache__local/1-6.mp4
+__pycache__
+local/1-6.mp4
+
+__pycache__/
+common/__pycache__/
+ui/__pycache__/
