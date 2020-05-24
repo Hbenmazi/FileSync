@@ -1,36 +1,26 @@
-import time
-
-import boto3
-from s3fs import S3FileSystem
-from watchdog.observers import Observer
-from FileSyncEventHandler import FileSyncEventHandler
-from FileSyncLauncher import FileSyncLauncher
-
-endpoint_url = "http://scuts3.depts.bingosoft.net:29999"
-aws_access_key_id = "8A5290742BF72419BAFF"
-aws_secret_access_key = "W0FGNTc5OTU0RkJEQjQ3RTZCQTA2MjgxOEYwRUY2RkREQ0JBMzI1NTRd"
-
-# Let's use Amazon S3
-s3 = boto3.resource('s3', endpoint_url=endpoint_url,
-                    aws_access_key_id=aws_access_key_id,
-                    aws_secret_access_key=aws_secret_access_key)
-s3_client = boto3.client('s3')
-
-# Print out bucket names
-for bucket in s3.buckets.all():
-    print(bucket.name)
+import sys
+from PyQt5 import QtWidgets
+from ui.UIFileSyncLauncher import UIFileSyncLauncherForm
+from ui.UIFileSync import UIFileSyncWidget
 
 if __name__ == "__main__":
-    endpoint_url = "http://scuts3.depts.bingosoft.net:29999"
-    aws_access_key_id = "8A5290742BF72419BAFF"
-    aws_secret_access_key = "W0FGNTc5OTU0RkJEQjQ3RTZCQTA2MjgxOEYwRUY2RkREQ0JBMzI1NTRd"
-    remote_root = 'remote'
-    local_root = 'local'
+    app = QtWidgets.QApplication(sys.argv)
+    launcher_widget = QtWidgets.QWidget()
+    ui_launcher = UIFileSyncLauncherForm()
+    ui_launcher.setupUi(launcher_widget)
+    launcher_widget.show()
 
-    launcher = FileSyncLauncher(endpoint_url,
-                                aws_access_key_id,
-                                aws_secret_access_key,
-                                local_root=local_root,
-                                remote_root=remote_root)
-    launcher.run()
+    sys.exit(app.exec_())
 
+    # endpoint_url = "http://scuts3.depts.bingosoft.net:29999"
+    # aws_access_key_id = "8A5290742BF72419BAFF"
+    # aws_secret_access_key = "W0FGNTc5OTU0RkJEQjQ3RTZCQTA2MjgxOEYwRUY2RkREQ0JBMzI1NTRd"
+    # remote_root = 'remote'
+    # local_root = 'local'
+    #
+    # launcher = FileSyncLauncher(endpoint_url,
+    #                             aws_access_key_id,
+    #                             aws_secret_access_key,
+    #                             local_root=local_root,
+    #                             remote_root=remote_root)
+    # launcher.run()

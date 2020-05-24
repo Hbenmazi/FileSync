@@ -5,23 +5,27 @@ import time
 import boto3
 from watchdog.observers import Observer
 from FileSyncEventHandler import FileSyncEventHandler
+import threading
 
 
-class FileSyncLauncher:
-    def __init__(self, endpoint_url, aws_access_key_id, aws_secret_access_key, local_root, remote_root, threshold=15,
-                 chunk_size=5):
+class FileSyncLauncher(threading.Thread):
+    def __init__(self, endpoint_url, aws_access_key_id, aws_secret_access_key, local_root, remote_root, bucket_name,
+                 threshold=15, chunk_size=5):
+        super().__init__()
         self.client = boto3.client('s3',
                                    endpoint_url=endpoint_url,
                                    aws_access_key_id=aws_access_key_id,
                                    aws_secret_access_key=aws_secret_access_key)
         self.local_root = local_root
         self.remote_root = remote_root
-        self.bucket_name = 'hezhiwei'
+        self.bucket_name = bucket_name
         self.threshold = threshold * MB
         self.chunk_size = chunk_size * MB
         self.event_handler = FileSyncEventHandler(client=self.client,
                                                   local_root=self.local_root,
-                                                  remote_root=self.remote_root)
+                                                  remote_root=self.remote_root,
+                                                  bucket_name=bucket_name)
+        self.stop = False
 
     def run(self):
         self.resume_upload()
@@ -29,11 +33,10 @@ class FileSyncLauncher:
         observer.schedule(self.event_handler, path=self.local_root, recursive=True)
         observer.start()
 
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
+        while not self.stop:
+            time.sleep(1)
+
+        observer.stop()
         observer.join()
 
     def resume_upload(self):
@@ -120,12 +123,3 @@ class FileSyncLauncher:
 
         except botocore.exceptions.ClientError as e:
             raise e
-
-
-if __name__ == "__main__":
-    endpoint_url = "http://scuts3.depts.bingosoft.net:29999"
-    aws_access_key_id = "8A5290742BF72419BAFF"
-    aws_secret_access_key = "W0FGNTc5OTU0RkJEQjQ3RTZCQTA2MjgxOEYwRUY2RkREQ0JBMzI1NTRd"
-    FileSyncLauncher(endpoint_url,
-                     aws_access_key_id,
-                     aws_secret_access_key, 'local', 'remote').resume_upload()

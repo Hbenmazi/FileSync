@@ -8,6 +8,7 @@ import botocore.exceptions
 from filechunkio import FileChunkIO
 from common.FilePart import FilePart
 from tqdm import tqdm
+
 MB = 1024 * 1024
 
 
@@ -88,7 +89,8 @@ def upload_object(client, bucket_name, src_path, key, threshold, chunk_size):
                     for i in range(0, chunk_cnt)]
 
             with ThreadPoolExecutor(max_workers=4) as pool:
-                res = list(tqdm(pool.map(upload_part, args), total=len(args), desc="Multi Part Uploading:{}".format(key)))
+                res = list(
+                    tqdm(pool.map(upload_part, args), total=len(args), desc="Multi Part Uploading:{}".format(key)))
 
             client.complete_multipart_upload(
                 Bucket=bucket_name,
@@ -117,6 +119,15 @@ def list_all_subdir(path):
     gen = os.walk(path)
     for x in gen:
         return x[1]
+
+
+def list_all_dir(s3, root):
+    res = []
+    for obj in s3.ls(root, detail=True, refresh=False):
+        if obj['type'] == 'directory' and obj['Key'] != root:
+            res.append(obj['Key'])
+            res = res + list_all_dir(s3, obj['Key'])
+    return list(set(res))
 
 
 if __name__ == "__main__":

@@ -11,12 +11,12 @@ from common.utils import *
 
 
 class FileSyncEventHandler(FileSystemEventHandler):
-    def __init__(self, client, local_root, remote_root, threshold=15,
+    def __init__(self, client, local_root, remote_root, bucket_name, threshold=15,
                  chunk_size=5):
         self.client = client
         self.local_root = local_root
         self.remote_root = remote_root
-        self.bucket_name = 'hezhiwei'
+        self.bucket_name = bucket_name
         self.threshold = threshold * MB
         self.chunk_size = chunk_size * MB
 
