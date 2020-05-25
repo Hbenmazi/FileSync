@@ -1,14 +1,30 @@
 import pickle
+from concurrent.futures.thread import ThreadPoolExecutor
 import botocore.exceptions
 from common.utils import *
 import time
 import boto3
-from watchdog.observers import Observer
+from FileSyncObserver import FileSyncObserver
 from FileSyncEventHandler import FileSyncEventHandler
 import threading
+import kthread
 
 
-class FileSyncLauncher(threading.Thread):
+class FileSyncLauncher(kthread.KThread):
+    """Launcher  of main work
+
+
+        Attributes:
+            endpoint_url: EndPoint url of S3 server.
+            aws_access_key_id: aws_access_key_id
+            aws_secret_access_key: aws_secret_access_key
+            local_root: Path of local dir.The files and folders under this path will be synchronized.
+            remote_root: Key of remote dir.The local files and folders will be synchronized to this dir.
+            bucket_name: Bucket name oF S3.
+            threshold: Multipart upload threshold(Byte)
+            chunk_size: Size of each chunk when using multipart upload.
+    """
+
     def __init__(self, endpoint_url, aws_access_key_id, aws_secret_access_key, local_root, remote_root, bucket_name,
                  threshold=15, chunk_size=5):
         super().__init__()
@@ -28,18 +44,31 @@ class FileSyncLauncher(threading.Thread):
         self.stop = False
 
     def run(self):
+        """ launch the main work
+
+            If there are in-progress multipart upload task, resume it.
+            Monitor the local root and synchronized it.
+
+        """
+
+        # resume multipart upload if needed
         self.resume_upload()
-        observer = Observer()
+
+        # Monitor the local root and start synchronize.
+        observer = FileSyncObserver()
         observer.schedule(self.event_handler, path=self.local_root, recursive=True)
         observer.start()
 
-        while not self.stop:
-            time.sleep(1)
-
-        observer.stop()
-        observer.join()
+        try:
+            while True:
+                time.sleep(1)
+        except SystemExit as e:
+            observer.stop()
+            observer.join()
 
     def resume_upload(self):
+        """ resume in-progress multipart uploading
+        """
 
         try:
             # get all in-progress multipart=upload

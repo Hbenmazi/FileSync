@@ -5,15 +5,20 @@
 # Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
-
+import os
+import sys
+import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QEventLoop
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QFileDialog, QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QFileDialog, QListWidget, QListWidgetItem, QApplication, QMessageBox, QDialog
 import s3fs
 
 from FileSyncLauncher import FileSyncLauncher
+from common.StdOutRedirect import StdOutRedirect
 from ui.UISelectDirDialog import UISelectDirDialog
+import threading
 
 
 class UIFileSyncWidget(object):
@@ -21,10 +26,11 @@ class UIFileSyncWidget(object):
     local_root = None
     remote_root = None
     launcher_thread = None
+    _stdout = StdOutRedirect()
 
     def setupUi(self, fileSyncWidget):
         fileSyncWidget.setObjectName("fileSyncWidget")
-        fileSyncWidget.resize(459, 331)
+        fileSyncWidget.resize(600, 331)
         self.widget = fileSyncWidget
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(fileSyncWidget)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
@@ -64,6 +70,7 @@ class UIFileSyncWidget(object):
 
         self.localRootLineEdit.setReadOnly(True)
         self.remoteRootLineEdit.setReadOnly(True)
+
         self.setSignalSlot()
 
     def retranslateUi(self, fileSyncWidget):
@@ -80,12 +87,17 @@ class UIFileSyncWidget(object):
         self.localRootPushButton.clicked.connect(self.selectLocalDir)
         self.remoteRootPushButton.clicked.connect(self.selectRootDir)
         self.startPushButton.clicked.connect(self.start)
+        # self.widget.closed.connect(self.close)
+        self.widget.closeEvent = self.closeEvent
+        self._stdout.printOccur.connect(lambda x: self._append_text(x))
 
     def start(self):
         if self.startPushButton.text() == 'Start':
             self.localRootPushButton.setEnabled(False)
             self.remoteRootPushButton.setEnabled(False)
-            self.startPushButton.setText('Pause')
+            self._stdout.start()
+            self.startPushButton.setText('Running..')
+            self.startPushButton.setEnabled(False)
             endpoint_url = self.config.get('endpoint_url')
             aws_access_key_id = self.config.get('aws_access_key_id')
             aws_secret_access_key = self.config.get('aws_secret_access_key')
@@ -101,12 +113,22 @@ class UIFileSyncWidget(object):
                                                     bucket_name=bucket_name)
             self.launcher_thread.start()
         else:
-            self.localRootPushButton.setEnabled(True)
-            self.remoteRootPushButton.setEnabled(True)
-            self.startPushButton.setText('Start')
+            pass
 
-            if self.launcher_thread:
-                self.launcher_thread.stop = True
+    def closeEvent(self, event):
+        print("Terminating........")
+        if self.launcher_thread and self.launcher_thread.is_alive():
+            self.launcher_thread.terminate()
+
+            # def wait(launcher_thread):
+            #     while launcher_thread.is_alive():
+            #         pass
+            #
+            # wait_thread = threading.Thread(target=wait, args=(self.launcher_thread,))
+            # wait_thread.start()
+            # # wait_thread.join()
+        else:
+            pass
 
     def selectLocalDir(self):
         self.localRootPushButton.setEnabled(False)
@@ -121,3 +143,9 @@ class UIFileSyncWidget(object):
         ui_select_dir_dialog.setupUi(select_dir_dialog)
         select_dir_dialog.show()
         select_dir_dialog.exec_()
+
+    def _append_text(self, msg):
+        self.textBrowser.moveCursor(QtGui.QTextCursor.End)
+        self.textBrowser.insertPlainText(msg)
+        # refresh textedit show, refer) https://doc.qt.io/qt-5/qeventloop.html#ProcessEventsFlag-enum
+        QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)

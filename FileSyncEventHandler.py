@@ -1,16 +1,24 @@
-import math
-import time
-
-from s3fs import S3FileSystem
 from watchdog.events import *
-import boto3
 import botocore.exceptions
-from concurrent.futures import ThreadPoolExecutor
 from common.Dir import Dir
 from common.utils import *
 
 
 class FileSyncEventHandler(FileSystemEventHandler):
+    """Monitoring local dir and react to file system events.
+
+
+    Attributes:
+        client: boot3.client('s3)
+        local_root: Path of local dir.The files and folders under this path will be synchronized.
+        remote_root: Key of remote dir.The local files and folders will be synchronized to this dir.
+        bucket_name: Bucket name oF S3.
+        threshold: Multipart upload threshold(Byte)
+        chunk_size: Size of each chunk when using multipart upload.
+    """
+
+    file_updated_event = set()  # a set to avoid handler the same events
+
     def __init__(self, client, local_root, remote_root, bucket_name, threshold=15,
                  chunk_size=5):
         self.client = client
@@ -20,8 +28,6 @@ class FileSyncEventHandler(FileSystemEventHandler):
         self.threshold = threshold * MB
         self.chunk_size = chunk_size * MB
 
-    file_updated_event = set()
-
     def on_moved(self, event):
         """Called when a file or a directory is moved or renamed.
 
@@ -30,16 +36,17 @@ class FileSyncEventHandler(FileSystemEventHandler):
         :type event:
             :class:`DirMovedEvent` or :class:`FileMovedEvent`
         """
-        print(event)
+
         src_prefix = event.src_path.replace(self.local_root, self.remote_root, 1).replace('\\', '/')
         dest_prefix = event.dest_path.replace(self.local_root, self.remote_root, 1).replace('\\', '/')
+        src_prefix = src_prefix.lstrip('/')
+        dest_prefix = dest_prefix.lstrip('/')
         response = self.client.list_objects(
             Bucket=self.bucket_name,
             Prefix=src_prefix,
         )
 
         if 'Contents' in response.keys():
-            # Todo:parallel
             for s3_object in response['Contents']:
                 src_key = s3_object['Key']
                 dest_key = s3_object['Key'].replace(src_prefix, dest_prefix, 1)
@@ -50,6 +57,7 @@ class FileSyncEventHandler(FileSystemEventHandler):
                 self.client.copy(CopySource=copy_source,
                                  Bucket=self.bucket_name,
                                  Key=dest_key)
+                print("Copy {} to {}".format(copy_source['Key'], dest_key))
 
             delete_objects = [{'Key': s3_object['Key']} for s3_object in response['Contents']]
             self.client.delete_objects(
@@ -82,18 +90,17 @@ class FileSyncEventHandler(FileSystemEventHandler):
 
             self.file_updated_event.add((seconds, event.src_path))
 
-        print(event)
-
         # generate key in S3
         key = event.src_path.replace(self.local_root, self.remote_root, 1)
         key = key.replace('\\', '/')
+        key = key.lstrip('/')
 
         # upload
 
         if event.is_directory:
             try:
                 self.client.upload_fileobj(Dir(), self.bucket_name, key + '/')
-
+                print("Create Folder:" + key + '/')
             except botocore.exceptions.ClientError as error:
                 raise error
         else:
@@ -117,11 +124,11 @@ class FileSyncEventHandler(FileSystemEventHandler):
         :type event:
             :class:`DirDeletedEvent` or :class:`FileDeletedEvent`
         """
-        print(event)
 
         # generate prefix in S3
         prefix = event.src_path.replace(self.local_root, self.remote_root, 1)
         prefix = prefix.replace('\\', '/')
+        prefix = prefix.lstrip('/')
 
         try:
             response = self.client.list_objects(
@@ -137,14 +144,14 @@ class FileSyncEventHandler(FileSystemEventHandler):
                     }
                 )
                 if 'Deleted' in response.keys():
-                    for deleted_object in response['Deleted']:
-                        print('S3 Delete Successfully:' + deleted_object['Key'])
+                    # for deleted_object in response['Deleted']:
+                    print('Delete:' + prefix)
 
                 if 'Errors' in response.keys():
                     for error_object in response['Errors']:
-                        print('S3 Delete Error:' + error_object['Key'] + '[{}]'.format(error_object['Code']))
+                        print('Delete Error:' + error_object['Key'] + '[{}]'.format(error_object['Code']))
             else:
-                print('S3 ListObject : No such objects that with ' + prefix + "as prefix.")
+                print('Not Found: No such objects that with ' + prefix + "as prefix in server.")
 
         except botocore.exceptions.ClientError as error:
             raise error
@@ -170,11 +177,11 @@ class FileSyncEventHandler(FileSystemEventHandler):
             return
 
         self.file_updated_event.add((seconds, event.src_path))
-        print(event)
 
         # generate key in S3
         key = event.src_path.replace(self.local_root, self.remote_root, 1)
         key = key.replace('\\', '/')
+        key = key.lstrip('/')
 
         # get ETag
         while True:
@@ -199,7 +206,7 @@ class FileSyncEventHandler(FileSystemEventHandler):
 
         # ignore if the same object has already exist in S3
         if 'ETag' in response.keys() and response['ETag'].strip("\'\"") == fetag:
-            print("S3 Head Object: {} already exists".format(key))
+            print("Found: {} already exists".format(key))
             return
 
         upload_object(self.client, self.bucket_name, event.src_path, key, self.threshold, self.chunk_size)

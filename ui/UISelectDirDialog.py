@@ -45,7 +45,8 @@ class UISelectDirDialog(object):
                                     client_kwargs={'endpoint_url': self.parent.config.get('endpoint_url')})
         bucket_name = self.parent.config.get('bucket_name')
         dir_list = list_all_dir(s3, bucket_name)
-        self.DirListWidget.addItems(dir_list)
+        dir_list = [bucket_name] + dir_list
+        self.DirListWidget.addItems(set(dir_list))
         self.setSignalSlot()
 
     def retranslateUi(self, SelectDirDialog):
