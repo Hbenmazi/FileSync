@@ -168,7 +168,7 @@ def upload_object(client, bucket_name, src_path, key, threshold, chunk_size):
         raise error
 
 
-def list_all_file(dir_path):
+def list_all_direct_file(dir_path):
     """list all file path in a dir
     """
     for r, d, f in os.walk(dir_path):
@@ -195,5 +195,13 @@ def list_all_dir(s3, root):
     return list(set(res))
 
 
-if __name__ == "__main__":
-    print(list_all_file('..\\parts\\{}'.format("新建文件夹")))
+def allfile(basepath):
+    res = []
+    for item in os.listdir(basepath):
+        path = os.path.join(basepath, item)
+        if os.path.isfile(path):
+            res.append(path)
+        else:
+            res = res + allfile(path)
+    return res
+

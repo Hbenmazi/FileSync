@@ -53,6 +53,7 @@ class FileSyncLauncher(kthread.KThread):
 
         # resume multipart upload if needed
         self.resume_upload()
+        self.check()
 
         # Monitor the local root and start synchronize.
         observer = FileSyncObserver()
@@ -94,7 +95,7 @@ class FileSyncLauncher(kthread.KThread):
                         print('Resume Uploading...: ' + key)
 
                         # get all local FilePart objects
-                        part_names = list_all_file('parts/{}'.format(upload_id))
+                        part_names = list_all_direct_file('parts/{}'.format(upload_id))
                         file_parts = []
                         for pname in part_names:
                             with open('parts/{}/{}'.format(upload_id, pname), 'rb') as f:
@@ -152,3 +153,40 @@ class FileSyncLauncher(kthread.KThread):
 
         except botocore.exceptions.ClientError as e:
             raise e
+
+    def check(self):
+        all_file_path = allfile(self.local_root)
+        for file_path in all_file_path:
+            # get ETag
+            while True:
+                try:
+                    fetag = calc_etag(file_path, self.threshold, self.chunk_size)
+                    break
+                except IOError:
+                    time.sleep(0.05)
+
+            key = file_path.replace(self.local_root, self.remote_root, 1)
+            key = key.replace('\\', '/')
+            key = key.lstrip('/')
+
+            # try to get the object header in S3
+            try:
+                response = self.client.head_object(
+                    Bucket=self.bucket_name,
+                    Key=key,
+                )
+
+            except botocore.exceptions.ClientError as error:
+                if error.response['Error']['Code'] == '404':  # Object doesn't exist in S3
+                    response = {}
+                else:
+                    raise error
+
+            # ignore if the same object has already exist in S3
+            if 'ETag' in response.keys() and response['ETag'].strip("\'\"") == fetag:
+                print("Found: {} already exists".format(key))
+                return
+
+            upload_object(self.client, self.bucket_name, file_path, key, self.threshold, self.chunk_size)
+
+
