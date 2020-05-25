@@ -8,9 +8,9 @@
 import boto3
 from botocore.exceptions import *
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QApplication
 from ui.UIFileSync import UIFileSyncWidget
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtCore import pyqtSignal, QObject, QCoreApplication
 
 
 class UIFileSyncLauncherForm(QObject):
@@ -126,3 +126,4 @@ class UIFileSyncLauncherForm(QObject):
         ui_handler.setupUi(handler_dialog)
         handler_dialog.show()
         handler_dialog.exec_()
+        self.form.close()
