@@ -17,6 +17,10 @@
 
 :white_check_mark:完成了大文件分块上传功能
 
+:white_check_mark:完成断点续传功能
+
+:white_check_mark:完成UI与逻辑层结合
+
 :o:对于文本文件的保存操作，即使没有修改文件内容，也会触发一次文件修改事件（修改时间改变了），导致重复上传
 
 * :ballot_box_with_check:上传之前先检查S3中该文件的ETag，如果与本地计算出的相同，则不再上传
