@@ -5,4 +5,4 @@ botocore==1.16.12
 filechunkio==1.8
 watchdog==0.10.2
 s3fs==0.4.2
-PyQt5==5.14.2
+PyQt5==5.13.0

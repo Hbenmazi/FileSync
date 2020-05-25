@@ -5,3 +5,5 @@ local/1-6.mp4
 __pycache__/
 common/__pycache__/
 ui/__pycache__/
+build
+dist
