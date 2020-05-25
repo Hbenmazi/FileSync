@@ -2,7 +2,6 @@ import sys
 from PyQt5 import QtWidgets
 from ui.UIFileSyncLauncher import UIFileSyncLauncherForm
 
-
 app = QtWidgets.QApplication(sys.argv)
 launcher_widget = QtWidgets.QWidget()
 ui_launcher = UIFileSyncLauncherForm()

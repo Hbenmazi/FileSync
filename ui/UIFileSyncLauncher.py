@@ -93,7 +93,7 @@ class UIFileSyncLauncherForm(QObject):
                               aws_secret_access_key=aws_secret_access_key)
             s3.head_bucket(Bucket=bucket_name)
         except (ValueError, ParamValidationError, EndpointConnectionError, ClientError) as e:
-            if isinstance(e, ValueError) or isinstance(e, ParamValidationError):
+            if isinstance(e, ValueError) or isinstance(e, ParamValidationError) or isinstance(e, EndpointConnectionError):
                 msg = str(e)
             else:
                 error_code = e.response['Error']['Code']
