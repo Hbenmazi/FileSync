@@ -26,7 +26,7 @@ class FileSyncLauncher(kthread.KThread):
     """
 
     def __init__(self, endpoint_url, aws_access_key_id, aws_secret_access_key, local_root, remote_root, bucket_name,
-                 threshold=15, chunk_size=5):
+                 threshold=20, chunk_size=5):
         super().__init__()
         self.client = boto3.client('s3',
                                    endpoint_url=endpoint_url,
@@ -121,11 +121,17 @@ class FileSyncLauncher(kthread.KThread):
                                 for fpart in file_parts]
 
                         # multi-part upload
-                        with ThreadPoolExecutor(max_workers=4) as pool:
-                            res = list(tqdm(pool.map(upload_part, args),
-                                            total=len(args) + len(Parts),
-                                            initial=len(Parts),
-                                            desc="Multi Part Uploading:{}".format(key)))
+                        # with ThreadPoolExecutor(max_workers=4) as pool:
+                        #     res = list(tqdm(pool.map(upload_part, args),
+                        #                     total=len(args) + len(Parts),
+                        #                     initial=len(Parts),
+                        #                     desc="Multi Part Uploading:{}".format(key)))
+
+                        with ThreadPoolExecutor(max_workers=6) as pool:
+                            task_list = [pool.submit(upload_part, arg) for arg in args]
+                            res = [task.result() for task in
+                                   tqdm(as_completed(task_list), desc="Multi Part Uploading:{}".format(key),
+                                        total=len(args) + len(Parts), initial=len(Parts))]
 
                         Parts = Parts + list(res)
 
@@ -155,7 +161,7 @@ class FileSyncLauncher(kthread.KThread):
             raise e
 
     def check(self):
-        all_file_path = allfile(self.local_root)
+        all_file_path = list_all_file(self.local_root)
         for file_path in all_file_path:
             # get ETag
             while True:
@@ -188,5 +194,3 @@ class FileSyncLauncher(kthread.KThread):
                 return
 
             upload_object(self.client, self.bucket_name, file_path, key, self.threshold, self.chunk_size)
-
-

@@ -92,6 +92,10 @@ class UIFileSyncWidget(object):
         self._stdout.printOccur.connect(lambda x: self._append_text(x))
 
     def start(self):
+        if not self.remote_root or not self.local_root:
+            QMessageBox.information(QMessageBox(), "Tip", "Please specify root paths.", QMessageBox.Ok)
+            return
+
         if self.startPushButton.text() == 'Start':
             self.localRootPushButton.setEnabled(False)
             self.remoteRootPushButton.setEnabled(False)
@@ -102,7 +106,11 @@ class UIFileSyncWidget(object):
             aws_access_key_id = self.config.get('aws_access_key_id')
             aws_secret_access_key = self.config.get('aws_secret_access_key')
             bucket_name = self.config.get('bucket_name')
-            remote_root = self.remote_root.strip(bucket_name + '/')
+
+            if self.remote_root.startswith(bucket_name + '/'):
+                remote_root = self.remote_root.replace(bucket_name + '/', "", 1)
+            else:
+                remote_root = self.remote_root.replace(bucket_name, "", 1)
             local_root = self.local_root
 
             self.launcher_thread = FileSyncLauncher(endpoint_url,
