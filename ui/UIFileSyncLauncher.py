@@ -60,9 +60,9 @@ class UIFileSyncLauncherForm(QObject):
         QtCore.QMetaObject.connectSlotsByName(fileSyncLauncherForm)
 
         self.endPointURLLineEdit.setText("http://scuts3.depts.bingosoft.net:29999")
-        self.acessKeyIdLineEdit.setText("8A5290742BF72419BAFF")
-        self.secretAcessKeyLineEdit.setText("W0FGNTc5OTU0RkJEQjQ3RTZCQTA2MjgxOEYwRUY2RkREQ0JBMzI1NTRd")
-        self.bucketLineEdit.setText("hezhiwei")
+        # self.acessKeyIdLineEdit.setText("8A5290742BF72419BAFF")
+        # self.secretAcessKeyLineEdit.setText("W0FGNTc5OTU0RkJEQjQ3RTZCQTA2MjgxOEYwRUY2RkREQ0JBMzI1NTRd")
+        # self.bucketLineEdit.setText("hezhiwei")
         self.setSignalSlot()
 
     def retranslateUi(self, fileSyncLauncherForm):

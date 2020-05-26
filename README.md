@@ -9,6 +9,14 @@
 
 ***
 
+### 2020.05.26
+
+:white_check_mark:修复了一些Bug
+
+:white_check_mark:撰写设计文档 录制演示视频
+
+
+
 ### 2020.05.25
 
 :white_check_mark:学习了S3的文件分块上传的机制
