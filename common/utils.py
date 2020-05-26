@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 from concurrent.futures.thread import ThreadPoolExecutor
+from concurrent.futures import as_completed
 from hashlib import md5
 import botocore.exceptions
 from filechunkio import FileChunkIO
@@ -144,9 +145,14 @@ def upload_object(client, bucket_name, src_path, key, threshold, chunk_size):
             # for arg in tqdm(args, total=len(args), desc="Multi Part Upload{}".format(key)):
             #     res.append(upload_part(arg))
 
-            with ThreadPoolExecutor(max_workers=4) as pool:
-                res = list(
-                    tqdm(pool.map(upload_part, args), total=len(args), desc="Multi Part Uploading:{}".format(key)))
+            # with ThreadPoolExecutor(max_workers=6) as pool:
+            #     res = list(
+            #         tqdm(pool.map(upload_part, args), total=len(args), desc="Multi Part Uploading:{}".format(key)))
+
+            with ThreadPoolExecutor(max_workers=6) as pool:
+                task_list = [pool.submit(upload_part, arg) for arg in args]
+                res = [task.result() for task in
+                       tqdm(as_completed(task_list), desc="Multi Part Uploading:{}".format(key),  total=len(args))]
 
             # complete multi part upload
             client.complete_multipart_upload(
@@ -181,6 +187,7 @@ def list_all_subdir(path):
     gen = os.walk(path)
     for x in gen:
         return x[1]
+    return list()
 
 
 def list_all_dir(s3, root):
@@ -195,13 +202,12 @@ def list_all_dir(s3, root):
     return list(set(res))
 
 
-def allfile(basepath):
+def list_all_file(basepath):
     res = []
     for item in os.listdir(basepath):
         path = os.path.join(basepath, item)
         if os.path.isfile(path):
             res.append(path)
         else:
-            res = res + allfile(path)
+            res = res + list_all_file(path)
     return res
-
