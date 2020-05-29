@@ -12,19 +12,19 @@
 
 :white_check_mark:完成实操三扩展题
 
-![image-20200529100131898](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529100131898.png)
+![image-20200529100131898](D:\gitRepo\FileSync\image\image-20200529100131898.png)
 
 :white_check_mark:完成实操四扩展题
 
-![image-20200529100148405](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529100148405.png)
+![image-20200529100148405](D:\gitRepo\FileSync\image\image-20200529100148405.png)
 
-
+***
 
 ### 2020.05.28
 
 :white_check_mark:完成实操二扩展题
 
-![image-20200529100046104](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529100046104.png)
+![image-20200529100046104](D:\gitRepo\FileSync\image\image-20200529100046104.png)
 
 ***
 
@@ -32,7 +32,7 @@
 
 :white_check_mark:完成实操一扩展题
 
-![image-20200529095953926](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529095953926.png)
+![image-20200529095953926](D:\gitRepo\FileSync\image\image-20200529095953926.png)
 
 ***
 
