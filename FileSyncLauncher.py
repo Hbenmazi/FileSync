@@ -133,7 +133,7 @@ class FileSyncLauncher(kthread.KThread):
                                    tqdm(as_completed(task_list), desc="Multi Part Uploading:{}".format(key),
                                         total=len(args) + len(Parts), initial=len(Parts))]
 
-                        Parts = Parts + list(res)
+                        Parts = Parts + res
 
                         # complete multi-part upload
                         self.client.complete_multipart_upload(

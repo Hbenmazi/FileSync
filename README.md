@@ -1,5 +1,4 @@
-# FileSync
-作业：品高软件大数据实训-大数据怎么存 文件同步器
+作业：品高软件大数据实训
 
 姓名：何志威
 
@@ -9,13 +8,41 @@
 
 ***
 
+### 2020.05.29
+
+:white_check_mark:完成实操三扩展题
+
+![image-20200529100131898](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529100131898.png)
+
+:white_check_mark:完成实操四扩展题
+
+![image-20200529100148405](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529100148405.png)
+
+
+
+### 2020.05.28
+
+:white_check_mark:完成实操二扩展题
+
+![image-20200529100046104](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529100046104.png)
+
+***
+
+### 2020.05.27
+
+:white_check_mark:完成实操一扩展题
+
+![image-20200529095953926](C:\Users\QJ\AppData\Roaming\Typora\typora-user-images\image-20200529095953926.png)
+
+***
+
 ### 2020.05.26
 
 :white_check_mark:修复了一些Bug
 
 :white_check_mark:撰写设计文档 录制演示视频
 
-
+***
 
 ### 2020.05.25
 
@@ -36,10 +63,6 @@
 :o:创建大文件时会触发两次文件修改事件，首先是元数据的修改，其次是文件内容的修改。由于文件较大，这两次修改事件之间会隔一段比较长的时间，因而无法通过时间间隔以聚合两个事件。
 
 * :ballot_box_with_check:第一个事件触发时，先循环至获取该文件的读取权限再上传。第二个事件触发时通过检验ETag避免重复上传。
-
-
-
-
 
 ***
 
