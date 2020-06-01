@@ -8,6 +8,24 @@
 
 ***
 
+### 2020.06.01
+
+:white_check_mark:学习了如何将sql语言和高级编程语言融合
+
+:white_check_mark:学习了在spark上进行多表查询
+
+:white_check_mark:学习了spark和greenplum共享数据
+
+:white_check_mark:学习了如何将数据导入mysql
+
+
+
+
+
+
+
+***
+
 ### 2020.05.29
 
 :white_check_mark:完成实操三扩展题
