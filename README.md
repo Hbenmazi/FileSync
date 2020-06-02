@@ -8,6 +8,16 @@
 
 ***
 
+### 2020.06.02
+
+:white_check_mark:学习了如何使用本地Flink程序输出socket消息源内容
+
+:white_check_mark:学习了本地Flink程序中读取Kafka消息
+
+:white_check_mark:学习了如何将S3对象存储数据提价到Kafka
+
+***
+
 ### 2020.06.01
 
 :white_check_mark:学习了如何将sql语言和高级编程语言融合
@@ -17,12 +27,6 @@
 :white_check_mark:学习了spark和greenplum共享数据
 
 :white_check_mark:学习了如何将数据导入mysql
-
-
-
-
-
-
 
 ***
 
