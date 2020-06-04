@@ -8,6 +8,24 @@
 
 ***
 
+
+
+### 2020.06.04
+
+:white_check_mark:完成6月2日课程扩展三
+
+***
+
+### 2020.06.03
+
+:white_check_mark:完成6月2日课程扩展一
+
+:white_check_mark:完成6月2日课程扩展二
+
+
+
+***
+
 ### 2020.06.02
 
 :white_check_mark:学习了如何使用本地Flink程序输出socket消息源内容
