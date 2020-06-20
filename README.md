@@ -8,6 +8,56 @@
 
 ***
 
+### 2020.06.19
+
+:white_check_mark:完成大数据人工智能大作业
+
+:white_check_mark:使用Pipeline整合特征处理和模型训练，采用SVR模型，并通过网格搜素与5折交叉验证调整超参数进行训练
+
+:white_check_mark:评估模型效果，输出结果
+
+:white_check_mark:撰写说明书和流程图
+
+***
+
+### 2020.06.18
+
+:white_check_mark:在Kaggle中下载回归任务数据集，并进行简单的分析和特征工程
+
+***
+
+### 2020.06.17
+
+:white_check_mark:详细学习了Sklearn中的Pipeline类，了解了它的构造方式和使用方式
+
+***
+
+### 2020.06.16
+
+:white_check_mark:通过DaaS的领域建模平台完成概念模型设计，通过物理模型完成表业务库的表和数据仓库的表设计。
+
+:white_check_mark:通过DaaS的数据工厂模块，熟悉ETL的数据接入，数据处理；
+
+:white_check_mark:通过DaaS获取、查看、编辑、构建元数据
+
+***
+
+### 2020.06.15
+
+:white_check_mark:学习了模型训练与评估
+
+:white_check_mark:了解了Pipeline
+
+:white_check_mark:使用深度学习训练分类模型
+
+***
+
+### 2020.06.12
+
+:white_check_mark:学习了特征工程，了解了不同类型特征的处理方法
+
+***
+
 ### 2020.06.11
 
 :white_check_mark:完成大数据实时计算大作业
